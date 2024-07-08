@@ -1,0 +1,50 @@
+<!-- templates/index.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Object Detection</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-4">
+        <h2 class="text-center mb-4">Real-Time Object Detection</h2>
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-body">
+                        <img id="video_feed" class="img-fluid" src="{{ url_for('video_feed') }}">
+                    </div>
+                    <div class="card-footer">
+                        <button id="start_camera" class="btn btn-primary mr-2">Start Camera</button>
+                        <button id="stop_camera" class="btn btn-danger">Stop Camera</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        // JavaScript to handle button clicks and interaction with Flask backend
+        $(document).ready(function() {
+            var startButton = document.getElementById('start_camera');
+            var stopButton = document.getElementById('stop_camera');
+            var videoFeed = document.getElementById('video_feed');
+
+            // Start camera stream
+            startButton.onclick = function() {
+                videoFeed.src = "{{ url_for('video_feed') }}";
+            };
+
+            // Stop camera stream
+            stopButton.onclick = function() {
+                videoFeed.src = "";
+            };
+        });
+    </script>
+</body>
+</html>
