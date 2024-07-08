@@ -1,21 +1,29 @@
-<!-- templates/index.html -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Real-Time Object Detection</title>
+    <title>Real-Time Cat Detection</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        #video {
+            display: none; /* Hide the video element */
+        }
+        #processed_frame {
+            display: none; /* Hide initially */
+        }
+    </style>
 </head>
 <body>
     <div class="container mt-4">
-        <h2 class="text-center mb-4">Real-Time Object Detection</h2>
+        <h2 class="text-center mb-4">Real-Time Cat Detection</h2>
         <div class="row justify-content-center">
             <div class="col-md-8">
                 <div class="card">
                     <div class="card-body">
-                        <img id="video_feed" class="img-fluid" src="{{ url_for('video_feed') }}">
+                        <video id="video" width="100%" autoplay></video>
+                        <canvas id="canvas" class="d-none"></canvas>
+                        <img id="processed_frame" class="img-fluid">
                     </div>
                     <div class="card-footer">
                         <button id="start_camera" class="btn btn-primary mr-2">Start Camera</button>
@@ -26,25 +34,59 @@
         </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
-        // JavaScript to handle button clicks and interaction with Flask backend
-        $(document).ready(function() {
-            var startButton = document.getElementById('start_camera');
-            var stopButton = document.getElementById('stop_camera');
-            var videoFeed = document.getElementById('video_feed');
+        var video = document.getElementById('video');
+        var canvas = document.getElementById('canvas');
+        var processedFrame = document.getElementById('processed_frame');
+        var startButton = document.getElementById('start_camera');
+        var stopButton = document.getElementById('stop_camera');
 
-            // Start camera stream
-            startButton.onclick = function() {
-                videoFeed.src = "{{ url_for('video_feed') }}";
-            };
+        let stream;
 
-            // Stop camera stream
-            stopButton.onclick = function() {
-                videoFeed.src = "";
-            };
-        });
+        startButton.onclick = function() {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(mediaStream) {
+                    stream = mediaStream;
+                    video.srcObject = mediaStream;
+                    video.play();
+                    processedFrame.style.display = 'block'; // Show the processed frame
+                    captureFrame();
+                })
+                .catch(function(err) {
+                    console.log("Error: " + err);
+                });
+        };
+
+        stopButton.onclick = function() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            video.srcObject = null;
+            processedFrame.style.display = 'none'; // Hide the processed frame
+        };
+
+        function captureFrame() {
+            if (video.srcObject) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+                canvas.toBlob((blob) => {
+                    var formData = new FormData();
+                    formData.append('frame', blob);
+                    fetch('/process_frame', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.blob())
+                    .then(data => {
+                        var url = URL.createObjectURL(data);
+                        processedFrame.src = url;
+                        setTimeout(captureFrame, 100);  // Capture next frame
+                    })
+                    .catch(error => console.error('Error:', error));
+                }, 'image/jpeg');
+            }
+        }
     </script>
 </body>
 </html>
