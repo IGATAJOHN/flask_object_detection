@@ -33,7 +33,7 @@ def process_frame():
         confidence = detections[0, 0, i, 2]
         if confidence > 0.2:
             class_id = int(detections[0, 0, i, 1])
-            if class_id == 8:  # Check if the detected object is a cat
+            if class_id == 3:  # Check if the detected object is a cat
                 box = detections[0, 0, i, 3:7] * np.array([frame.shape[1], frame.shape[0], frame.shape[1], frame.shape[0]])
                 (startX, startY, endX, endY) = box.astype("int")
 
