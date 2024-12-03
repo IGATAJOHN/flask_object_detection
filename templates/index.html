@@ -117,59 +117,64 @@
     </footer>
 
     <!-- Scripts -->
-    <script>
-        var video = document.getElementById('video');
-        var canvas = document.getElementById('canvas');
-        var processedFrame = document.getElementById('processed_frame');
-        var startButton = document.getElementById('start_camera');
-        var stopButton = document.getElementById('stop_camera');
+<script>
+    var video = document.getElementById('video');
+    var canvas = document.getElementById('canvas');
+    var processedFrame = document.getElementById('processed_frame');
+    var startButton = document.getElementById('start_camera');
+    var stopButton = document.getElementById('stop_camera');
 
-        let stream;
+    let stream;
 
-        startButton.onclick = function() {
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(function(mediaStream) {
-                    stream = mediaStream;
-                    video.srcObject = mediaStream;
-                    video.play();
-                    processedFrame.style.display = 'block'; // Show the processed frame
-                    captureFrame();
-                })
-                .catch(function(err) {
-                    console.log("Error: " + err);
-                });
-        };
+    startButton.onclick = function() {
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function(mediaStream) {
+                stream = mediaStream;
+                video.srcObject = mediaStream;
+                video.play();
+                video.style.display = 'block'; // Show the video feed
+                processedFrame.style.display = 'none'; // Hide the processed frame initially
+                captureFrame();
+            })
+            .catch(function(err) {
+                console.log("Error: " + err);
+            });
+    };
 
-        stopButton.onclick = function() {
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-            }
-            video.srcObject = null;
-            processedFrame.style.display = 'none'; // Hide the processed frame
-        };
-
-        function captureFrame() {
-            if (video.srcObject) {
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-                canvas.toBlob((blob) => {
-                    var formData = new FormData();
-                    formData.append('frame', blob);
-                    fetch('/process_frame', {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(response => response.blob())
-                    .then(data => {
-                        var url = URL.createObjectURL(data);
-                        processedFrame.src = url;
-                        setTimeout(captureFrame, 100);  // Capture next frame
-                    })
-                    .catch(error => console.error('Error:', error));
-                }, 'image/jpeg');
-            }
+    stopButton.onclick = function() {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
         }
-    </script>
+        video.srcObject = null;
+        video.style.display = 'none'; // Hide the video feed
+        processedFrame.style.display = 'none'; // Hide the processed frame
+    };
+
+    function captureFrame() {
+        if (video.srcObject) {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob((blob) => {
+                var formData = new FormData();
+                formData.append('frame', blob);
+                fetch('/process_frame', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.blob())
+                .then(data => {
+                    var url = URL.createObjectURL(data);
+                    processedFrame.src = url;
+                    processedFrame.style.display = 'block'; // Show the processed frame
+                    video.style.display = 'none'; // Hide the video feed
+                    setTimeout(captureFrame, 100); // Capture the next frame
+                })
+                .catch(error => console.error('Error:', error));
+            }, 'image/jpeg');
+        }
+    }
+</script>
+
 </body>
 </html>
