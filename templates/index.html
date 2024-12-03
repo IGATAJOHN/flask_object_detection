@@ -3,162 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Real-Time Cat Detection</title>
+    <title>Real-Time Object Detection</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-        }
-        .navbar {
-            background-color: #007BFF;
-        }
-        .navbar a {
-            color: white !important;
-        }
         #video {
-            display: none; /* Hide the video element */
+            display: none;
         }
         #processed_frame {
-            display: none; /* Hide initially */
-        }
-        .spinner {
             display: none;
-            margin: 20px auto;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #007BFF;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        footer {
-            background-color: #f8f9fa;
-            padding: 10px 0;
-            text-align: center;
-            margin-top: 20px;
+        .spinner-border {
+            display: none;
+            width: 3rem;
+            height: 3rem;
+            border-width: .3em;
         }
     </style>
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <a class="navbar-brand" href="#">Cat Detector</a>
-        <div class="collapse navbar-collapse">
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item"><a class="nav-link" href="#">Home</a></li>
-                <li class="nav-item"><a class="nav-link" href="#">About</a></li>
-                <li class="nav-item"><a class="nav-link" href="#">Contact</a></li>
-            </ul>
-        </div>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#">Object Detection</a>
     </nav>
-
-    <!-- Main Container -->
     <div class="container mt-4">
-        <h2 class="text-center mb-4">Real-Time Cat Detection</h2>
+        <h2 class="text-center mb-4">Real-Time Object Detection</h2>
         <div class="row justify-content-center">
             <div class="col-md-8">
                 <div class="card">
-                    <div class="card-body text-center">
+                    <div class="card-body">
+                        <div class="text-center mb-3">
+                            <div id="loading" class="spinner-border text-primary" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                        </div>
                         <video id="video" width="100%" autoplay></video>
                         <canvas id="canvas" class="d-none"></canvas>
-                        <img id="processed_frame" class="img-fluid mt-3" alt="Processed Frame">
-                        <div class="spinner" id="loading_spinner"></div>
-                        <p id="status_message" class="text-muted mt-2">Press "Start Camera" to begin.</p>
+                        <img id="processed_frame" class="img-fluid" alt="Processed Frame">
                     </div>
                     <div class="card-footer text-center">
-                        <button id="start_camera" class="btn btn-primary mr-2">
-                            <i class="fas fa-play"></i> Start Camera
-                        </button>
-                        <button id="stop_camera" class="btn btn-danger">
-                            <i class="fas fa-stop"></i> Stop Camera
-                        </button>
+                        <button id="start_camera" class="btn btn-primary mr-2">Start Camera</button>
+                        <button id="stop_camera" class="btn btn-danger">Stop Camera</button>
                     </div>
                 </div>
+                <div id="alert-placeholder" class="mt-3"></div>
             </div>
         </div>
     </div>
-
-    <!-- Footer -->
-    <footer>
-        <p>&copy; 2024 CAT Detection System</p>
-    </footer>
-
     <script>
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const processedFrame = document.getElementById('processed_frame');
-        const startButton = document.getElementById('start_camera');
-        const stopButton = document.getElementById('stop_camera');
-        const spinner = document.getElementById('loading_spinner');
-        const statusMessage = document.getElementById('status_message');
+        var video = document.getElementById('video');
+        var canvas = document.getElementById('canvas');
+        var processedFrame = document.getElementById('processed_frame');
+        var startButton = document.getElementById('start_camera');
+        var stopButton = document.getElementById('stop_camera');
+        var loading = document.getElementById('loading');
+        var alertPlaceholder = document.getElementById('alert-placeholder');
 
         let stream;
 
-        // Start Camera
-        startButton.addEventListener('click', () => {
+        startButton.onclick = function() {
             navigator.mediaDevices.getUserMedia({ video: true })
-                .then(mediaStream => {
+                .then(function(mediaStream) {
                     stream = mediaStream;
                     video.srcObject = mediaStream;
                     video.play();
-                    processedFrame.style.display = 'block';
-                    statusMessage.textContent = 'Detection in progress...';
-                    spinner.style.display = 'block';
+                    processedFrame.style.display = 'block'; // Show the processed frame
                     captureFrame();
                 })
-                .catch(err => {
-                    console.error('Error accessing camera:', err);
-                    statusMessage.textContent = 'Error accessing camera. Please try again.';
+                .catch(function(err) {
+                    console.log("Error: " + err);
                 });
-        });
+        };
 
-        // Stop Camera
-        stopButton.addEventListener('click', () => {
+        stopButton.onclick = function() {
             if (stream) {
                 stream.getTracks().forEach(track => track.stop());
             }
             video.srcObject = null;
-            processedFrame.style.display = 'none';
-            spinner.style.display = 'none';
-            statusMessage.textContent = 'Camera stopped.';
-        });
+            processedFrame.style.display = 'none'; // Hide the processed frame
+            hideLoader();
+        };
 
-        // Capture Frames and Process
         function captureFrame() {
             if (video.srcObject) {
+                showLoader();
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
                 canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-
-                canvas.toBlob(blob => {
-                    const formData = new FormData();
+                canvas.toBlob((blob) => {
+                    var formData = new FormData();
                     formData.append('frame', blob);
-
                     fetch('/process_frame', {
                         method: 'POST',
-                        body: formData,
+                        body: formData
                     })
-                        .then(response => response.blob())
-                        .then(data => {
-                            const url = URL.createObjectURL(data);
-                            processedFrame.src = url;
-                            spinner.style.display = 'none';
-                            statusMessage.textContent = 'Cat detected!';
-                            setTimeout(captureFrame, 100);
-                        })
-                        .catch(err => {
-                            console.error('Error processing frame:', err);
-                            statusMessage.textContent = 'Error processing frame.';
-                            spinner.style.display = 'none';
-                        });
+                    .then(response => response.json())
+                    .then(data => {
+                        var byteCharacters = atob(data.image);
+                        var byteNumbers = new Array(byteCharacters.length);
+                        for (var i = 0; i < byteCharacters.length; i++) {
+                            byteNumbers[i] = byteCharacters.charCodeAt(i);
+                        }
+                        var byteArray = new Uint8Array(byteNumbers);
+                        var blob = new Blob([byteArray], { type: 'image/jpeg' });
+                        var url = URL.createObjectURL(blob);
+                        processedFrame.src = url;
+
+                        if (data.detected_objects.length > 0) {
+                            showAlert('Objects Detected: ' + data.detected_objects.join(', '), 'success');
+                        } else {
+                            showAlert('No Objects Detected', 'danger');
+                        }
+
+                        setTimeout(captureFrame, 100);  // Capture next frame
+                        hideLoader();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        hideLoader();
+                    });
                 }, 'image/jpeg');
             }
         }
+
+        function showLoader() {
+            loading.style.display = 'block';
+        }
+
+        function hideLoader() {
+            loading.style.display = 'none';
+        }
+
+        function showAlert(message, type) {
+            const alertHtml = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+            alertPlaceholder.innerHTML = alertHtml;
+        }
     </script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>
