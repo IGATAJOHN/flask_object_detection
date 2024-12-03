@@ -12,12 +12,39 @@
         #processed_frame {
             display: none; /* Hide initially */
         }
+    
+                body {
+            display: flex;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+        #wrapper {
+            display: flex;
+            flex: 1;
+        }
+        #sidebar {
+            width: 250px;
+            background-color: #343a40;
+            color: white;
+            flex-shrink: 0;
+            height: 100vh;
+        }
+        #sidebar .nav-link {
+            color: white;
+        }
+        #sidebar .nav-link:hover {
+            background-color: #495057;
+        }
+        #main-content {
+            flex-grow: 1;
+            padding: 20px;
+        }
         footer {
             background-color: #f8f9fa;
             padding: 20px 0;
             text-align: center;
-            margin-top: 30px;
         }
+
     </style>
 </head>
 <body>
@@ -41,7 +68,29 @@
             </ul>
         </div>
     </nav>
-
+    <!-- Wrapper for Sidebar and Main Content -->
+    <div id="wrapper">
+        <!-- Sidebar -->
+        <div id="sidebar">
+            <h4 class="text-center py-3">Menu</h4>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" href="#home">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#features">Features</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#detection">Start Detection</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#settings">Settings</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#contact">Contact Us</a>
+                </li>
+            </ul>
+        </div>
     <!-- Main Content -->
     <div class="container mt-4">
         <h2 class="text-center mb-4">Real-Time Bird Detection</h2>
