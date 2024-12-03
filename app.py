@@ -5,7 +5,7 @@ from io import BytesIO
 import threading
 import os
 import time
-from playsound import playsound
+
 
 app = Flask(__name__)
 
@@ -20,11 +20,6 @@ CLASSES = ["background", "aeroplane", "bicycle", "bird", "boat",
 sound_playing = False
 stop_sound = False
 
-def play_sound():
-    global stop_sound
-    while not stop_sound:
-        playsound("alert.wav")
-        time.sleep(0.1)  # Short delay to prevent high CPU usage
 
 @app.route('/')
 def index():
@@ -65,7 +60,7 @@ def process_frame():
     if phone_detected and not sound_playing:
         stop_sound = False
         sound_playing = True
-        threading.Thread(target=play_sound).start()
+        
     elif not phone_detected and sound_playing:
         stop_sound = True
         sound_playing = False
