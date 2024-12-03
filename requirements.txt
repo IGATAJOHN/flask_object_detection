@@ -2,4 +2,3 @@ flask
 opencv-contrib-python
 numpy
 gunicorn
-playsound
