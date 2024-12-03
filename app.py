@@ -1,11 +1,7 @@
-from flask import Flask, render_template, request, Response, send_file
+from flask import Flask, render_template, request, jsonify
 import cv2
 import numpy as np
-from io import BytesIO
-import threading
-import os
-import time
-
+import base64
 
 app = Flask(__name__)
 
@@ -16,37 +12,33 @@ CLASSES = ["background", "aeroplane", "bicycle", "bird", "boat",
            "dog", "horse", "motorbike", "person", "pottedplant", "sheep",
            "sofa", "train", "tvmonitor", "cell phone"]
 
-# Global variable to control sound playback
-sound_playing = False
-stop_sound = False
-
-
 @app.route('/')
 def index():
     return render_template('index.html')
 
 @app.route('/process_frame', methods=['POST'])
 def process_frame():
-    global sound_playing, stop_sound
+    if 'frame' not in request.files:
+        return jsonify({'error': 'No frame provided'}), 400
 
     # Get the frame from the request
     file = request.files['frame'].read()
     npimg = np.frombuffer(file, np.uint8)
     frame = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
 
-    # Perform mobile phone detection
+    # Perform object detection
     blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)), 0.007843, (300, 300), 127.5)
     net.setInput(blob)
     detections = net.forward()
 
-    phone_detected = False
+    detected_objects = []
 
     # Loop over the detections
     for i in np.arange(0, detections.shape[2]):
         confidence = detections[0, 0, i, 2]
         if confidence > 0.2:
             class_id = int(detections[0, 0, i, 1])
-            if class_id == 8:  # Check if the detected object is a cell phone
+            if class_id in [14, 15, 72]:  # Bird, Cell phone, Remote
                 box = detections[0, 0, i, 3:7] * np.array([frame.shape[1], frame.shape[0], frame.shape[1], frame.shape[0]])
                 (startX, startY, endX, endY) = box.astype("int")
 
@@ -54,20 +46,18 @@ def process_frame():
                 cv2.rectangle(frame, (startX, startY), (endX, endY), (255, 0, 0), 2)
                 label = "{}: {:.2f}%".format(CLASSES[class_id], confidence * 100)
                 cv2.putText(frame, label, (startX, startY - 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+                
+                detected_objects.append(CLASSES[class_id])
 
-                phone_detected = True
-
-    if phone_detected and not sound_playing:
-        stop_sound = False
-        sound_playing = True
-        
-    elif not phone_detected and sound_playing:
-        stop_sound = True
-        sound_playing = False
-
-    # Encode frame to JPEG and send it back
+    # Encode frame to JPEG and send it back with detection status
     ret, buffer = cv2.imencode('.jpg', frame)
-    return send_file(BytesIO(buffer), mimetype='image/jpeg')
+    img_str = base64.b64encode(buffer).decode('utf-8')
+
+    response = {
+        'image': img_str,
+        'detected_objects': detected_objects
+    }
+    return jsonify(response)
 
 if __name__ == '__main__':
     app.run(debug=True, host="0.0.0.0", port="5000")
