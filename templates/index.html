@@ -6,36 +6,17 @@
     <title>Real-Time Bird Detection</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
-        body {
-            display: flex;
-            min-height: 100vh;
-            flex-direction: column;
+        #video {
+            display: none; /* Hide the video element */
         }
-        #wrapper {
-            display: flex;
-            flex: 1;
-        }
-        #sidebar {
-            width: 250px;
-            background-color: #343a40;
-            color: white;
-            flex-shrink: 0;
-            height: 100vh;
-        }
-        #sidebar .nav-link {
-            color: white;
-        }
-        #sidebar .nav-link:hover {
-            background-color: #495057;
-        }
-        #main-content {
-            flex-grow: 1;
-            padding: 20px;
+        #processed_frame {
+            display: none; /* Hide initially */
         }
         footer {
             background-color: #f8f9fa;
             padding: 20px 0;
             text-align: center;
+            margin-top: 30px;
         }
     </style>
 </head>
@@ -61,47 +42,20 @@
         </div>
     </nav>
 
-    <!-- Wrapper for Sidebar and Main Content -->
-    <div id="wrapper">
-        <!-- Sidebar -->
-        <div id="sidebar">
-            <h4 class="text-center py-3">Menu</h4>
-            <ul class="nav flex-column">
-                <li class="nav-item">
-                    <a class="nav-link" href="#home">Home</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#features">Features</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#detection">Start Detection</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#settings">Settings</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#contact">Contact Us</a>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Main Content -->
-        <div id="main-content">
-            <div class="container mt-4">
-                <h2 class="text-center mb-4">Real-Time Bird Detection</h2>
-                <div class="row justify-content-center">
-                    <div class="col-md-8">
-                        <div class="card">
-                            <div class="card-body">
-                                <video id="video" width="100%" autoplay></video>
-                                <canvas id="canvas" class="d-none"></canvas>
-                                <img id="processed_frame" class="img-fluid">
-                            </div>
-                            <div class="card-footer">
-                                <button id="start_camera" class="btn btn-primary mr-2">Start Camera</button>
-                                <button id="stop_camera" class="btn btn-danger">Stop Camera</button>
-                            </div>
-                        </div>
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <h2 class="text-center mb-4">Real-Time Bird Detection</h2>
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-body">
+                        <video id="video" width="100%" autoplay></video>
+                        <canvas id="canvas" class="d-none"></canvas>
+                        <img id="processed_frame" class="img-fluid">
+                    </div>
+                    <div class="card-footer">
+                        <button id="start_camera" class="btn btn-primary mr-2">Start Camera</button>
+                        <button id="stop_camera" class="btn btn-danger">Stop Camera</button>
                     </div>
                 </div>
             </div>
@@ -112,69 +66,64 @@
     <footer>
         <div class="container">
             <p>&copy; 2024 Real-Time Bird Detection. All rights reserved.</p>
-            
+            <p>Designed and developed with <span style="color: red;">&hearts;</span> by [Your Name/Team]</p>
         </div>
     </footer>
 
     <!-- Scripts -->
-<script>
-    var video = document.getElementById('video');
-    var canvas = document.getElementById('canvas');
-    var processedFrame = document.getElementById('processed_frame');
-    var startButton = document.getElementById('start_camera');
-    var stopButton = document.getElementById('stop_camera');
+    <script>
+        var video = document.getElementById('video');
+        var canvas = document.getElementById('canvas');
+        var processedFrame = document.getElementById('processed_frame');
+        var startButton = document.getElementById('start_camera');
+        var stopButton = document.getElementById('stop_camera');
 
-    let stream;
+        let stream;
 
-    startButton.onclick = function() {
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(function(mediaStream) {
-                stream = mediaStream;
-                video.srcObject = mediaStream;
-                video.play();
-                video.style.display = 'block'; // Show the video feed
-                processedFrame.style.display = 'none'; // Hide the processed frame initially
-                captureFrame();
-            })
-            .catch(function(err) {
-                console.log("Error: " + err);
-            });
-    };
-
-    stopButton.onclick = function() {
-        if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-        }
-        video.srcObject = null;
-        video.style.display = 'none'; // Hide the video feed
-        processedFrame.style.display = 'none'; // Hide the processed frame
-    };
-
-    function captureFrame() {
-        if (video.srcObject) {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-            canvas.toBlob((blob) => {
-                var formData = new FormData();
-                formData.append('frame', blob);
-                fetch('/process_frame', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.blob())
-                .then(data => {
-                    var url = URL.createObjectURL(data);
-                    processedFrame.src = url;
+        startButton.onclick = function() {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(mediaStream) {
+                    stream = mediaStream;
+                    video.srcObject = mediaStream;
+                    video.play();
                     processedFrame.style.display = 'block'; // Show the processed frame
-                    video.style.display = 'none'; // Hide the video feed
-                    setTimeout(captureFrame, 100); // Capture the next frame
+                    captureFrame();
                 })
-                .catch(error => console.error('Error:', error));
-            }, 'image/jpeg');
-        }
-    }
-</script>
+                .catch(function(err) {
+                    console.log("Error: " + err);
+                });
+        };
 
+        stopButton.onclick = function() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            video.srcObject = null;
+            processedFrame.style.display = 'none'; // Hide the processed frame
+        };
+
+        function captureFrame() {
+            if (video.srcObject) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+                canvas.toBlob((blob) => {
+                    var formData = new FormData();
+                    formData.append('frame', blob);
+                    fetch('/process_frame', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.blob())
+                    .then(data => {
+                        var url = URL.createObjectURL(data);
+                        processedFrame.src = url;
+                        setTimeout(captureFrame, 100);  // Capture next frame
+                    })
+                    .catch(error => console.error('Error:', error));
+                }, 'image/jpeg');
+            }
+        }
+    </script>
 </body>
 </html>
