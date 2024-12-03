@@ -6,17 +6,36 @@
     <title>Real-Time Bird Detection</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
-        #video {
-            display: none; /* Hide the video element */
+        body {
+            display: flex;
+            min-height: 100vh;
+            flex-direction: column;
         }
-        #processed_frame {
-            display: none; /* Hide initially */
+        #wrapper {
+            display: flex;
+            flex: 1;
+        }
+        #sidebar {
+            width: 250px;
+            background-color: #343a40;
+            color: white;
+            flex-shrink: 0;
+            height: 100vh;
+        }
+        #sidebar .nav-link {
+            color: white;
+        }
+        #sidebar .nav-link:hover {
+            background-color: #495057;
+        }
+        #main-content {
+            flex-grow: 1;
+            padding: 20px;
         }
         footer {
             background-color: #f8f9fa;
             padding: 20px 0;
             text-align: center;
-            margin-top: 30px;
         }
     </style>
 </head>
@@ -42,20 +61,47 @@
         </div>
     </nav>
 
-    <!-- Main Content -->
-    <div class="container mt-4">
-        <h2 class="text-center mb-4">Real-Time Bird Detection</h2>
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-body">
-                        <video id="video" width="100%" autoplay></video>
-                        <canvas id="canvas" class="d-none"></canvas>
-                        <img id="processed_frame" class="img-fluid">
-                    </div>
-                    <div class="card-footer">
-                        <button id="start_camera" class="btn btn-primary mr-2">Start Camera</button>
-                        <button id="stop_camera" class="btn btn-danger">Stop Camera</button>
+    <!-- Wrapper for Sidebar and Main Content -->
+    <div id="wrapper">
+        <!-- Sidebar -->
+        <div id="sidebar">
+            <h4 class="text-center py-3">Menu</h4>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" href="#home">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#features">Features</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#detection">Start Detection</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#settings">Settings</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#contact">Contact Us</a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div id="main-content">
+            <div class="container mt-4">
+                <h2 class="text-center mb-4">Real-Time Bird Detection</h2>
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-body">
+                                <video id="video" width="100%" autoplay></video>
+                                <canvas id="canvas" class="d-none"></canvas>
+                                <img id="processed_frame" class="img-fluid">
+                            </div>
+                            <div class="card-footer">
+                                <button id="start_camera" class="btn btn-primary mr-2">Start Camera</button>
+                                <button id="stop_camera" class="btn btn-danger">Stop Camera</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -66,7 +112,7 @@
     <footer>
         <div class="container">
             <p>&copy; 2024 Real-Time Bird Detection. All rights reserved.</p>
-            <p>Designed and developed with <span style="color: red;">&hearts;</span> by [Your Name/Team]</p>
+            
         </div>
     </footer>
 
