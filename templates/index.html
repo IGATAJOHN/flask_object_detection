@@ -3,59 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Real-Time Object Detection</title>
+    <title>Real-Time Cat Detection</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
         #video {
-            display: none;
+            display: none; /* Hide the video element */
         }
         #processed_frame {
-            display: none;
-        }
-        .spinner-border {
-            display: none;
-            width: 3rem;
-            height: 3rem;
-            border-width: .3em;
+            display: none; /* Hide initially */
         }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="#">Object Detection</a>
-    </nav>
     <div class="container mt-4">
-        <h2 class="text-center mb-4">Real-Time Object Detection</h2>
+        <h2 class="text-center mb-4">Real-Time Bird Detection</h2>
         <div class="row justify-content-center">
             <div class="col-md-8">
                 <div class="card">
                     <div class="card-body">
-                        <div class="text-center mb-3">
-                            <div id="loading" class="spinner-border text-primary" role="status">
-                                <span class="sr-only">Loading...</span>
-                            </div>
-                        </div>
                         <video id="video" width="100%" autoplay></video>
                         <canvas id="canvas" class="d-none"></canvas>
-                        <img id="processed_frame" class="img-fluid" alt="Processed Frame">
+                        <img id="processed_frame" class="img-fluid">
                     </div>
-                    <div class="card-footer text-center">
+                    <div class="card-footer">
                         <button id="start_camera" class="btn btn-primary mr-2">Start Camera</button>
                         <button id="stop_camera" class="btn btn-danger">Stop Camera</button>
                     </div>
                 </div>
-                <div id="alert-placeholder" class="mt-3"></div>
             </div>
         </div>
     </div>
+
     <script>
         var video = document.getElementById('video');
         var canvas = document.getElementById('canvas');
         var processedFrame = document.getElementById('processed_frame');
         var startButton = document.getElementById('start_camera');
         var stopButton = document.getElementById('stop_camera');
-        var loading = document.getElementById('loading');
-        var alertPlaceholder = document.getElementById('alert-placeholder');
 
         let stream;
 
@@ -79,12 +63,10 @@
             }
             video.srcObject = null;
             processedFrame.style.display = 'none'; // Hide the processed frame
-            hideLoader();
         };
 
         function captureFrame() {
             if (video.srcObject) {
-                showLoader();
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
                 canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -95,53 +77,16 @@
                         method: 'POST',
                         body: formData
                     })
-                    .then(response => response.json())
+                    .then(response => response.blob())
                     .then(data => {
-                        var byteCharacters = atob(data.image);
-                        var byteNumbers = new Array(byteCharacters.length);
-                        for (var i = 0; i < byteCharacters.length; i++) {
-                            byteNumbers[i] = byteCharacters.charCodeAt(i);
-                        }
-                        var byteArray = new Uint8Array(byteNumbers);
-                        var blob = new Blob([byteArray], { type: 'image/jpeg' });
-                        var url = URL.createObjectURL(blob);
+                        var url = URL.createObjectURL(data);
                         processedFrame.src = url;
-
-                        if (data.detected_objects.length > 0) {
-                            showAlert('Objects Detected: ' + data.detected_objects.join(', '), 'success');
-                        } else {
-                            showAlert('No Objects Detected', 'danger');
-                        }
-
                         setTimeout(captureFrame, 100);  // Capture next frame
-                        hideLoader();
                     })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        hideLoader();
-                    });
+                    .catch(error => console.error('Error:', error));
                 }, 'image/jpeg');
             }
         }
-
-        function showLoader() {
-            loading.style.display = 'block';
-        }
-
-        function hideLoader() {
-            loading.style.display = 'none';
-        }
-
-        function showAlert(message, type) {
-            const alertHtml = `
-                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                    ${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            `;
-            alertPlaceholder.innerHTML = alertHtml;
-        }
     </script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>
